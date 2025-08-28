@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Actions - Steel.run</title>
+    <meta name="description" content="Manage your saved web automation actions. Edit, organize, and track the performance of your custom actions.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/style.css">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="my-actions-page">
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-brand">
+                <a href="/" class="brand-link">
+                    <div class="brand-icon">⚡</div>
+                    <span class="brand-text">Steel.run</span>
+                </a>
+            </div>
+            <div class="nav-menu">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/dashboard" class="nav-link">Gallery</a>
+                <a href="/editor" class="nav-link">Editor</a>
+                <a href="/my-actions" class="nav-link active">My Actions</a>
+                <button id="auth-button" class="btn btn-primary">Sign In</button>
+            </div>
+            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main my-actions-main">
+        <!-- Page Header -->
+        <section class="page-header">
+            <div class="page-header-content">
+                <div class="header-text">
+                    <h1 class="page-title">My Actions</h1>
+                    <p class="page-description">
+                        Manage your saved web automation actions. Create, edit, and organize your custom workflows.
+                    </p>
+                </div>
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="create-action-btn">
+                        <span class="btn-icon">➕</span>
+                        Create New Action
+                    </button>
+                    <button class="btn btn-primary" id="import-action-btn">
+                        <span class="btn-icon">📥</span>
+                        Import Action
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Auth Required Notice -->
+        <section class="auth-notice-section" id="auth-notice" style="display: none;">
+            <div class="auth-notice-container">
+                <div class="notice-content">
+                    <div class="notice-icon">🔐</div>
+                    <div class="notice-text">
+                        <h3>Sign In Required</h3>
+                        <p>You need to sign in to view and manage your saved actions.</p>
+                    </div>
+                    <div class="notice-actions">
+                        <button class="btn btn-primary" id="auth-sign-in">Sign In</button>
+                        <button class="btn btn-secondary" onclick="window.location.href='/'">Go to Home</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- My Actions Content -->
+        <section class="my-actions-section" id="my-actions-content">
+            <!-- Stats Overview -->
+            <div class="stats-section">
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-icon">⚡</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="total-actions">0</div>
+                            <div class="stat-label">Total Actions</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">✅</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="successful-runs">0</div>
+                            <div class="stat-label">Successful Runs</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">⏱</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="avg-runtime">0s</div>
+                            <div class="stat-label">Avg Runtime</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📅</div>
+                        <div class="stat-content">
+                            <div class="stat-number" id="last-run">Never</div>
+                            <div class="stat-label">Last Run</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions Management -->
+            <div class="actions-management">
+                <div class="management-header">
+                    <div class="management-filters">
+                        <input type="text" id="actions-search" class="search-input" placeholder="Search your actions...">
+                        <select id="status-filter" class="form-control">
+                            <option value="all">All Statuses</option>
+                            <option value="active">Active Only</option>
+                            <option value="inactive">Inactive Only</option>
+                        </select>
+                        <select id="category-filter" class="form-control">
+                            <option value="all">All Categories</option>
+                            <option value="social_media">Social Media</option>
+                            <option value="web_scraping">Web Scraping</option>
+                            <option value="forms">Forms</option>
+                            <option value="automation">Automation</option>
+                        </select>
+                    </div>
+                    <div class="management-actions">
+                        <button class="btn btn-secondary btn-small" id="export-all-btn">Export All</button>
+                        <button class="btn btn-secondary btn-small" id="bulk-actions-btn">Bulk Actions</button>
+                    </div>
+                </div>
+
+                <!-- Actions List -->
+                <div class="actions-list-container">
+                    <!-- Loading State -->
+                    <div class="actions-loading" id="my-actions-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Loading your actions...</p>
+                    </div>
+
+                    <!-- Actions List -->
+                    <div class="actions-list" id="my-actions-list" style="display: none;">
+                        <!-- Actions will be populated by JavaScript -->
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="actions-empty" id="my-actions-empty" style="display: none;">
+                        <div class="empty-icon">🎯</div>
+                        <h3>No actions yet</h3>
+                        <p>Create your first action to get started with automation.</p>
+                        <button class="btn btn-primary" id="create-first-action">Create Your First Action</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Create/Edit Action Modal -->
+    <div class="modal-overlay" id="action-editor-modal" style="display: none;">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h3 id="action-editor-title">Create New Action</h3>
+                <button class="modal-close" id="close-action-editor">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="action-editor-form" class="action-editor-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="action-name">Action Name *</label>
+                            <input type="text" id="action-name" class="form-control" required maxlength="255" placeholder="My Custom Action">
+                        </div>
+                        <div class="form-group">
+                            <label for="action-category">Category</label>
+                            <select id="action-category" class="form-control">
+                                <option value="automation">Automation</option>
+                                <option value="social_media">Social Media</option>
+                                <option value="web_scraping">Web Scraping</option>
+                                <option value="forms">Forms</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="action-description">Description</label>
+                        <textarea id="action-description" class="form-control" rows="3" placeholder="Describe what this action does..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="action-type">Base Action Type *</label>
+                        <select id="action-type" class="form-control" required>
+                            <option value="">Select base type...</option>
+                            <option value="website-screenshot">Website Screenshot</option>
+                            <option value="website-content">Website Content</option>
+                            <option value="twitter-post">Twitter Post</option>
+                            <option value="custom">Custom Implementation</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Parameters</label>
+                        <div class="parameters-builder" id="parameters-builder">
+                            <div class="parameter-item">
+                                <input type="text" placeholder="Parameter name" class="param-name">
+                                <select class="param-type">
+                                    <option value="string">Text</option>
+                                    <option value="number">Number</option>
+                                    <option value="boolean">Checkbox</option>
+                                    <option value="url">URL</option>
+                                </select>
+                                <input type="text" placeholder="Description" class="param-description">
+                                <button type="button" class="btn btn-small btn-danger remove-param">Remove</button>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary btn-small" id="add-parameter">Add Parameter</button>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="action-public" class="checkbox">
+                                <span class="checkbox-text">Make this action public</span>
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="action-active" class="checkbox" checked>
+                                <span class="checkbox-text">Action is active</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="webhook-url">Webhook URL (optional)</label>
+                        <input type="url" id="webhook-url" class="form-control" placeholder="https://example.com/webhook">
+                        <p class="form-help">Receive notifications when this action completes</p>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="cancel-action-editor">Cancel</button>
+                <button type="submit" form="action-editor-form" class="btn btn-primary">Save Action</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/static/app.js"></script>
+    <script>
+        // Initialize my actions page
+        document.addEventListener('DOMContentLoaded', function() {
+            window.steelApp = new SteelApp();
+            window.steelApp.initializeMyActions();
+        });
+    </script>
+
+    <!-- Action Item Template -->
+    <template id="my-action-item-template">
+        <div class="action-item" data-action-id="">
+            <div class="action-item-header">
+                <div class="action-checkbox">
+                    <input type="checkbox" class="action-select">
+                </div>
+                <div class="action-info">
+                    <h3 class="action-name"></h3>
+                    <p class="action-description"></p>
+                    <div class="action-meta">
+                        <span class="action-category"></span>
+                        <span class="action-status"></span>
+                        <span class="action-last-run"></span>
+                    </div>
+                </div>
+                <div class="action-stats">
+                    <div class="stat-item">
+                        <span class="stat-value runs-count">0</span>
+                        <span class="stat-label">Runs</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value success-rate">0%</span>
+                        <span class="stat-label">Success</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value avg-time">0s</span>
+                        <span class="stat-label">Avg Time</span>
+                    </div>
+                </div>
+                <div class="action-actions">
+                    <button class="btn btn-small btn-primary run-action-btn">Run</button>
+                    <button class="btn btn-small btn-secondary edit-action-btn">Edit</button>
+                    <div class="action-menu">
+                        <button class="menu-toggle">⋯</button>
+                        <div class="menu-dropdown">
+                            <button class="menu-item duplicate-action">Duplicate</button>
+                            <button class="menu-item export-action">Export</button>
+                            <button class="menu-item view-history">View History</button>
+                            <button class="menu-item delete-action">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-item-details" style="display: none;">
+                <div class="details-tabs">
+                    <button class="tab-btn active" data-tab="parameters">Parameters</button>
+                    <button class="tab-btn" data-tab="history">History</button>
+                    <button class="tab-btn" data-tab="settings">Settings</button>
+                </div>
+                
+                <div class="tab-content active" data-tab="parameters">
+                    <div class="parameters-display">
+                        <!-- Parameters will be populated dynamically -->
+                    </div>
+                </div>
+                
+                <div class="tab-content" data-tab="history">
+                    <div class="history-display">
+                        <!-- History will be populated dynamically -->
+                    </div>
+                </div>
+                
+                <div class="tab-content" data-tab="settings">
+                    <div class="settings-display">
+                        <!-- Settings will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+</body>
+</html>

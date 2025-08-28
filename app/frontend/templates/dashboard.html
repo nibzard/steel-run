@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Action Gallery - Steel.run</title>
+    <meta name="description" content="Browse and execute popular web automation actions. One-click automation for social media, forms, scraping, and more.">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/style.css">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="dashboard-page">
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <div class="nav-brand">
+                <a href="/" class="brand-link">
+                    <div class="brand-icon">⚡</div>
+                    <span class="brand-text">Steel.run</span>
+                </a>
+            </div>
+            <div class="nav-menu">
+                <a href="/" class="nav-link">Home</a>
+                <a href="/dashboard" class="nav-link active">Gallery</a>
+                <a href="/editor" class="nav-link">Editor</a>
+                <a href="/my-actions" class="nav-link">My Actions</a>
+                <button id="auth-button" class="btn btn-primary">Sign In</button>
+            </div>
+            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main dashboard-main">
+        <!-- Page Header -->
+        <section class="page-header">
+            <div class="page-header-content">
+                <h1 class="page-title">Action Gallery</h1>
+                <p class="page-description">
+                    Discover and execute popular web automation actions. Browse by category or search for specific tasks.
+                </p>
+            </div>
+        </section>
+
+        <!-- Search and Filters -->
+        <section class="filters-section">
+            <div class="filters-container">
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <div class="search-input-wrapper">
+                        <input 
+                            type="text" 
+                            id="action-search" 
+                            class="search-input" 
+                            placeholder="Search actions... (e.g., 'twitter', 'screenshot', 'form')"
+                        >
+                        <button class="search-button" id="search-button">
+                            <span class="search-icon">🔍</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Category Filters -->
+                <div class="category-filters">
+                    <div class="filter-group">
+                        <button class="filter-btn active" data-category="all">All Actions</button>
+                        <button class="filter-btn" data-category="social_media">Social Media</button>
+                        <button class="filter-btn" data-category="web_scraping">Web Scraping</button>
+                        <button class="filter-btn" data-category="forms">Forms</button>
+                        <button class="filter-btn" data-category="screenshots">Screenshots</button>
+                        <button class="filter-btn" data-category="automation">Automation</button>
+                    </div>
+                    
+                    <div class="filter-options">
+                        <select id="sort-select" class="sort-select">
+                            <option value="popular">Most Popular</option>
+                            <option value="name">Name A-Z</option>
+                            <option value="newest">Newest First</option>
+                            <option value="success_rate">Success Rate</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Actions Grid -->
+        <section class="actions-section">
+            <div class="actions-container">
+                <!-- Loading State -->
+                <div class="actions-loading" id="actions-loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading actions...</p>
+                </div>
+
+                <!-- Actions Grid -->
+                <div class="actions-grid" id="actions-grid" style="display: none;">
+                    <!-- Actions will be populated by JavaScript -->
+                </div>
+
+                <!-- Empty State -->
+                <div class="actions-empty" id="actions-empty" style="display: none;">
+                    <div class="empty-icon">🔍</div>
+                    <h3>No actions found</h3>
+                    <p>Try adjusting your search or filter criteria.</p>
+                    <button class="btn btn-primary" onclick="window.location.href='/'">Create New Action</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Featured Actions (Popular) -->
+        <section class="featured-section" id="featured-section">
+            <div class="featured-container">
+                <div class="featured-header">
+                    <h2>Featured Actions</h2>
+                    <p>Most popular actions from the community</p>
+                </div>
+                
+                <div class="featured-grid" id="featured-grid">
+                    <!-- Featured actions will be populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Action Details Modal -->
+    <div class="modal-overlay" id="action-modal" style="display: none;">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <div class="modal-title-group">
+                    <h3 id="action-modal-title">Action Details</h3>
+                    <div class="action-tags" id="action-modal-tags"></div>
+                </div>
+                <button class="modal-close" id="close-action-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="action-details-container">
+                    <!-- Action Info -->
+                    <div class="action-info">
+                        <div class="action-description">
+                            <p id="action-modal-description"></p>
+                        </div>
+                        
+                        <div class="action-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Success Rate:</span>
+                                <span class="stat-value" id="action-success-rate">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Avg Duration:</span>
+                                <span class="stat-value" id="action-duration">-</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Times Used:</span>
+                                <span class="stat-value" id="action-usage">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Authentication Notice -->
+                        <div class="auth-notice" id="action-auth-notice" style="display: none;">
+                            <div class="notice-icon">🔒</div>
+                            <div class="notice-text">
+                                <strong>Authentication Required</strong>
+                                <p>This action requires login credentials for the target website.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parameters Form -->
+                    <div class="parameters-section" id="action-parameters-section">
+                        <h4>Parameters</h4>
+                        <form id="action-parameters-form" class="parameters-form">
+                            <!-- Parameters will be dynamically generated -->
+                        </form>
+                    </div>
+
+                    <!-- Example Usage -->
+                    <div class="example-section" id="action-example-section">
+                        <h4>Example Usage</h4>
+                        <div class="example-code">
+                            <pre><code id="action-example-code"></code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="preview-action">Preview Code</button>
+                <button type="submit" form="action-parameters-form" class="btn btn-primary">Execute Action</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Execution Status Modal -->
+    <div class="modal-overlay" id="execution-modal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Action Execution</h3>
+                <button class="modal-close" id="close-execution-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="execution-status">
+                    <div class="status-header">
+                        <div class="status-icon" id="modal-status-icon">⏳</div>
+                        <div class="status-text">
+                            <h4 id="modal-status-title">Preparing Action...</h4>
+                            <p id="modal-status-message">Setting up browser session and analyzing parameters</p>
+                        </div>
+                    </div>
+                    
+                    <div class="status-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="modal-progress-fill"></div>
+                        </div>
+                        <div class="progress-time">
+                            <span id="modal-elapsed-time">0s</span> elapsed
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results will be shown here -->
+                <div class="modal-results" id="modal-execution-results" style="display: none;">
+                    <!-- Results content populated by JavaScript -->
+                </div>
+            </div>
+            <div class="modal-footer" id="execution-modal-footer">
+                <button type="button" class="btn btn-secondary" id="close-execution">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="/static/app.js"></script>
+    <script>
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            window.steelApp = new SteelApp();
+            window.steelApp.initializeDashboard();
+        });
+    </script>
+
+    <!-- Action Card Template -->
+    <template id="action-card-template">
+        <div class="action-card" data-action-id="">
+            <div class="action-card-header">
+                <div class="action-icon"></div>
+                <div class="action-title-group">
+                    <h3 class="action-title"></h3>
+                    <p class="action-category"></p>
+                </div>
+                <div class="action-menu">
+                    <button class="menu-btn" aria-label="Action menu">⋯</button>
+                </div>
+            </div>
+            
+            <div class="action-card-body">
+                <p class="action-description"></p>
+                
+                <div class="action-tags">
+                    <!-- Tags populated dynamically -->
+                </div>
+                
+                <div class="action-stats">
+                    <div class="stat">
+                        <span class="stat-icon">✓</span>
+                        <span class="stat-text success-rate"></span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-icon">⏱</span>
+                        <span class="stat-text duration"></span>
+                    </div>
+                    <div class="stat auth-required" style="display: none;">
+                        <span class="stat-icon">🔒</span>
+                        <span class="stat-text">Auth Required</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-card-footer">
+                <button class="btn btn-secondary btn-small action-details-btn">Details</button>
+                <button class="btn btn-primary btn-small action-execute-btn">Execute</button>
+            </div>
+        </div>
+    </template>
+</body>
+</html>

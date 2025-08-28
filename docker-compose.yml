@@ -1,0 +1,181 @@
+services:
+  # Steel.run Application
+  app:
+    build: .
+    ports:
+      - "8080:8000"
+    environment:
+      - ENV=production
+      - DATABASE_URL=postgresql+asyncpg://steelrun:${DB_PASSWORD:-secure_password}@db:5432/steelrun
+      - REDIS_URL=redis://redis:6379/0
+      - RUN_MIGRATIONS=true
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - app_logs:/app/logs
+      - app_data:/app/data
+    restart: unless-stopped
+    networks:
+      - steel_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=steelrun
+      - POSTGRES_USER=steelrun
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-secure_password}
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+    networks:
+      - steel_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U steelrun -d steelrun"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password}
+    volumes:
+      - redis_data:/data
+      - ./docker/redis.conf:/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - steel_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./docker/ssl:/etc/nginx/ssl:ro
+      - static_files:/var/www/static:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+    networks:
+      - steel_network
+
+  # Celery Worker (for background tasks)
+  worker:
+    build: .
+    command: celery -A app.core.celery worker --loglevel=info --concurrency=2
+    environment:
+      - ENV=production
+      - DATABASE_URL=postgresql+asyncpg://steelrun:${DB_PASSWORD:-secure_password}@db:5432/steelrun
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - app_logs:/app/logs
+      - app_data:/app/data
+    restart: unless-stopped
+    networks:
+      - steel_network
+
+  # Celery Beat (for scheduled tasks)
+  scheduler:
+    build: .
+    command: celery -A app.core.celery beat --loglevel=info --schedule=/app/data/celerybeat-schedule
+    environment:
+      - ENV=production
+      - DATABASE_URL=postgresql+asyncpg://steelrun:${DB_PASSWORD:-secure_password}@db:5432/steelrun
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - app_logs:/app/logs
+      - app_data:/app/data
+    restart: unless-stopped
+    networks:
+      - steel_network
+
+  # Prometheus for monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    restart: unless-stopped
+    networks:
+      - steel_network
+
+  # Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./docker/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    restart: unless-stopped
+    networks:
+      - steel_network
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  app_logs:
+    driver: local
+  app_data:
+    driver: local
+  static_files:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  steel_network:
+    driver: bridge

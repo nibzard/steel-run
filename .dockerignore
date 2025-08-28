@@ -1,0 +1,73 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.pytest_cache/
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.db
+*.sqlite
+.env
+.env.local
+.env.production
+logs/
+temp/
+tmp/
+
+# Documentation
+docs/
+README.md
+TODO.md
+SPECS.md
+ACTIONS.md
+FRONTEND.md
+IMPLEMENTATION_SUMMARY.md
+CLAUDE.md
+vision.md
+python-web-dev-*.md
+steel-llms.md
+steel-openapi-spec-v303.json
+
+# Development
+tests/
+examples/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+coverage.xml
+.coverage
+
+# Docker
+Dockerfile.dev
+docker-compose.dev.yml
+docker/
+
+# CI/CD
+.github/
+.pre-commit-config.yaml

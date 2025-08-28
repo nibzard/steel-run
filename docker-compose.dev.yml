@@ -1,0 +1,82 @@
+services:
+  # Development version with hot reload
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8080:8000"
+    environment:
+      - ENV=development
+      - DEBUG=true
+      - DATABASE_URL=sqlite+aiosqlite:///./steel_actions.db
+      - REDIS_URL=redis://redis:6379/1
+      - RELOAD=true
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+      - /app/.venv
+      - dev_logs:/app/logs
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - steel_dev_network
+
+  # Redis for development
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    restart: unless-stopped
+    networks:
+      - steel_dev_network
+
+  # Optional PostgreSQL for testing
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=steelrun_dev
+      - POSTGRES_USER=steelrun
+      - POSTGRES_PASSWORD=dev_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - steel_dev_network
+
+  # Test runner
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    command: pytest --cov=app --cov-report=html --cov-report=term-missing -v
+    environment:
+      - ENV=test
+      - SKIP_CONFIG_VALIDATION=true
+    volumes:
+      - .:/app
+      - /app/.venv
+    depends_on:
+      - redis
+    networks:
+      - steel_dev_network
+    profiles:
+      - testing
+
+volumes:
+  redis_dev_data:
+    driver: local
+  postgres_dev_data:
+    driver: local
+  dev_logs:
+    driver: local
+
+networks:
+  steel_dev_network:
+    driver: bridge

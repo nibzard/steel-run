@@ -69,3 +69,5 @@ async with Steel() as client:
     # ... use session
     await client.sessions.release(session.id)
 ```
+- We are running service through tailscale network here: http://100.126.153.59:8080/
+- IMPORTANT: never do mock implementations, or placeholders
