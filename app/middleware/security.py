@@ -45,20 +45,39 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             )
         
         # Feature Policy (Permissions Policy)
-        feature_policy = (
-            "camera 'none'; "
-            "microphone 'none'; "
-            "geolocation 'none'; "
-            "payment 'none'; "
-            "usb 'none'"
+        permissions_policy = (
+            "camera=(), "
+            "microphone=(), "
+            "geolocation=(), "
+            "payment=(), "
+            "usb=()"
         )
-        response.headers["Permissions-Policy"] = feature_policy
+        response.headers["Permissions-Policy"] = permissions_policy
         
         # Additional security headers
         response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
-        response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
-        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
-        response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+        
+        # Only set Cross-Origin policies for HTTPS or localhost (trustworthy origins)
+        def is_private_ip(hostname: str) -> bool:
+            """Check if hostname is a private/internal IP address."""
+            try:
+                import ipaddress
+                ip = ipaddress.ip_address(hostname)
+                return ip.is_private or ip.is_loopback
+            except ValueError:
+                return False
+        
+        is_trustworthy_origin = (
+            request.url.scheme == "https" or 
+            request.url.hostname in ["localhost", "127.0.0.1"] or
+            is_private_ip(request.url.hostname) or
+            settings.env == "production"
+        )
+        
+        if is_trustworthy_origin:
+            response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
+            response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+            response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
         
         # Server header (obscure server info)
         response.headers["Server"] = "Steel.run"

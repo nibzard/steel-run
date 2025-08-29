@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     description: str = "Atomic Web Functions Platform"
     debug: bool = Field(default=False, env="DEBUG")
     env: str = Field(default="development", env="ENV")
+    disable_auth_in_dev: bool = Field(default=False, env="DISABLE_AUTH_IN_DEV")
 
     # Server Configuration
     host: str = Field(default="0.0.0.0", env="HOST")

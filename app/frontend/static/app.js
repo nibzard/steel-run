@@ -164,6 +164,51 @@ class SteelApp {
     }
 
     async checkAuthStatus() {
+        try {
+            // Check if running in dev mode with auth disabled
+            const devStatus = await this.apiClient.getDevStatus();
+            console.log('Dev status response:', devStatus);
+            this.state.devMode = devStatus;
+            
+            if (devStatus && devStatus.auth_disabled) {
+                // In dev mode with auth disabled, automatically authenticate
+                this.state.currentUser = {
+                    email: devStatus.dev_user_email,
+                    username: 'developer',
+                    full_name: 'Development User',
+                    id: 'dev-user-id'
+                };
+                this.state.isAuthenticated = true;
+                this.updateAuthUI(true);
+                return;
+            }
+        } catch (error) {
+            console.error('Failed to fetch dev status:', error);
+            
+            // Fallback: Check if we're in development based on hostname
+            const isDevelopment = window.location.hostname === 'localhost' || 
+                                  window.location.hostname === '127.0.0.1' ||
+                                  window.location.hostname.includes('100.'); // Tailscale IPs
+            
+            if (isDevelopment) {
+                console.log('Detected development environment, enabling dev mode auth bypass');
+                this.state.devMode = { 
+                    auth_disabled: true, 
+                    dev_user_email: 'dev@steel.run',
+                    is_development: true 
+                };
+                this.state.currentUser = {
+                    email: 'dev@steel.run',
+                    username: 'developer',
+                    full_name: 'Development User',
+                    id: 'dev-user-id'
+                };
+                this.state.isAuthenticated = true;
+                this.updateAuthUI(true);
+                return;
+            }
+        }
+        
         const token = this.storage.get('auth_token');
         if (token) {
             try {
@@ -196,6 +241,7 @@ class SteelApp {
         const authButton = document.getElementById('auth-button');
         if (authButton) {
             authButton.addEventListener('click', () => {
+                console.log('Auth button clicked. isAuthenticated:', this.state.isAuthenticated, 'devMode:', this.state.devMode);
                 if (this.state.isAuthenticated) {
                     this.logout();
                 } else {
@@ -228,6 +274,61 @@ class SteelApp {
         if (authButton) {
             authButton.textContent = isAuthenticated ? 'Sign Out' : 'Sign In';
             authButton.className = isAuthenticated ? 'btn btn-secondary' : 'btn btn-primary';
+        }
+        
+        // Add dev mode indicator if auth is disabled
+        if (this.state.devMode && this.state.devMode.auth_disabled) {
+            this.showDevModeIndicator();
+        }
+    }
+    
+    showDevModeIndicator() {
+        // Remove existing dev mode indicator
+        const existingIndicator = document.getElementById('dev-mode-indicator');
+        if (existingIndicator) {
+            existingIndicator.remove();
+        }
+        
+        // Create dev mode banner
+        const devBanner = document.createElement('div');
+        devBanner.id = 'dev-mode-indicator';
+        devBanner.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(90deg, #ff6b6b, #ffd93d);
+            color: #333;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            z-index: 9999;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        `;
+        devBanner.innerHTML = '🚧 DEVELOPMENT MODE - Authentication Disabled (dev@steel.run) 🚧';
+        
+        document.body.insertBefore(devBanner, document.body.firstChild);
+        
+        // Adjust body padding to account for banner
+        document.body.style.paddingTop = '40px';
+        
+        // Also add indicator to navigation
+        const navBrand = document.querySelector('.brand-text');
+        if (navBrand && !navBrand.querySelector('.dev-badge')) {
+            const devBadge = document.createElement('span');
+            devBadge.className = 'dev-badge';
+            devBadge.style.cssText = `
+                background: #ff6b6b;
+                color: white;
+                font-size: 10px;
+                padding: 2px 6px;
+                border-radius: 12px;
+                margin-left: 8px;
+                font-weight: bold;
+            `;
+            devBadge.textContent = 'DEV';
+            navBrand.appendChild(devBadge);
         }
     }
 
@@ -407,9 +508,17 @@ class SteelApp {
                 this.updateExecutionProgress(status);
 
                 if (status.status === 'completed') {
-                    const results = await this.apiClient.getExecutionResults(runId);
-                    this.showExecutionResults(results);
-                    return;
+                    try {
+                        const results = await this.apiClient.getExecutionResults(runId);
+                        // Only show results if we got actual results (not 202)
+                        if (results && results.status !== 'in_progress') {
+                            this.showExecutionResults(results);
+                            return;
+                        }
+                        // If still in progress, continue polling
+                    } catch (error) {
+                        console.warn('Results not ready yet:', error);
+                    }
                 } else if (status.status === 'failed') {
                     this.showExecutionError(new Error(status.error_message || 'Action failed'));
                     return;
@@ -435,10 +544,16 @@ class SteelApp {
     }
 
     showExecutionStatus() {
+        console.log('showExecutionStatus called');
         const section = document.getElementById('execution-section');
+        console.log('Execution section exists:', !!section);
         if (section) {
+            console.log('Setting execution section display to block');
             section.style.display = 'block';
             section.scrollIntoView({ behavior: 'smooth' });
+            console.log('Execution section display after setting:', section.style.display);
+        } else {
+            console.error('Execution section not found!');
         }
     }
 
@@ -509,11 +624,23 @@ class SteelApp {
     }
 
     showExecutionResults(results) {
+        console.log('showExecutionResults called with:', results);
         this.updateExecutionStatus('completed', 'Action completed successfully!', 100);
         
+        // Ensure the main execution section is visible first
+        const executionSection = document.getElementById('execution-section');
+        if (executionSection) {
+            console.log('Making sure execution section is visible');
+            executionSection.style.display = 'block';
+        }
+        
         const resultsSection = document.getElementById('execution-results');
+        console.log('Results section exists:', !!resultsSection);
         if (resultsSection) {
+            console.log('Setting results section display to block');
             resultsSection.style.display = 'block';
+        } else {
+            console.error('Results section not found!');
         }
 
         // Show screenshot if available
@@ -1130,7 +1257,7 @@ class SteelApp {
         const example = `# Execute ${action.name} via API
 import requests
 
-response = requests.post('${window.location.origin}/api/v1/actions/${action.id}/run', 
+response = requests.post('${window.location.origin}/api/v1/stored-actions/${action.id}/run', 
     json={
         "parameters": {
             // Add your parameters here
@@ -2435,6 +2562,13 @@ print(f"Execution ID: {result['run_id']}")`;
     }
 
     showAuthModal() {
+        // Check if we're in dev mode and should already be authenticated
+        if (this.state.devMode && this.state.devMode.auth_disabled) {
+            console.log('Dev mode detected in showAuthModal, refreshing auth status');
+            this.checkAuthStatus();
+            return;
+        }
+        
         // For now, just redirect to a simple auth page or show a placeholder
         this.showError('Authentication not implemented yet. Coming soon!');
     }
@@ -2464,9 +2598,18 @@ class SteelAPIClient {
 
         const response = await fetch(url, config);
         
-        if (!response.ok) {
+        if (!response.ok && response.status !== 202) {
             const error = await response.text();
             throw new Error(error || `HTTP ${response.status}`);
+        }
+        
+        // Handle 202 as a special case (execution in progress)
+        if (response.status === 202) {
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                return await response.json();
+            }
+            return await response.text();
         }
 
         const contentType = response.headers.get('content-type');
@@ -2517,7 +2660,7 @@ class SteelAPIClient {
     }
 
     async executeStoredAction(actionId, payload) {
-        return this.makeRequest(`/actions/${actionId}/run`, {
+        return this.makeRequest(`/stored-actions/${actionId}/run`, {
             method: 'POST',
             body: JSON.stringify(payload)
         });
@@ -2679,6 +2822,11 @@ class SteelAPIClient {
     
     async getPerformanceMetrics() {
         return this.makeRequest('/monitoring/performance');
+    }
+    
+    // === DEV MODE API METHODS === //
+    async getDevStatus() {
+        return this.makeRequest('/actions/dev-status');
     }
 }
 

@@ -5,6 +5,7 @@ from fastapi import Depends, HTTPException, Request, WebSocket, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..core.config import settings
 from ..core.database import get_db
 from ..models.user import User
 from ..services.auth_service import AuthService
@@ -34,6 +35,10 @@ async def get_current_user(
     Raises:
         HTTPException: If token is invalid or user not found
     """
+    # Check if dev mode auth bypass is enabled
+    if settings.is_development and settings.disable_auth_in_dev:
+        return await AuthService.get_or_create_dev_user(db)
+    
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -77,6 +82,10 @@ async def get_current_user_optional(
     Returns:
         Current user instance if authenticated, None otherwise
     """
+    # Check if dev mode auth bypass is enabled
+    if settings.is_development and settings.disable_auth_in_dev:
+        return await AuthService.get_or_create_dev_user(db)
+    
     if not credentials:
         return None
 
@@ -146,6 +155,10 @@ async def get_current_user_or_api_key(
     Raises:
         HTTPException: If neither authentication method is valid
     """
+    # Check if dev mode auth bypass is enabled
+    if settings.is_development and settings.disable_auth_in_dev:
+        return await AuthService.get_or_create_dev_user(db)
+    
     # Try JWT token first
     if credentials:
         try:
@@ -182,6 +195,10 @@ async def get_current_user_or_api_key_optional(
     Returns:
         Current user instance if authenticated, None otherwise
     """
+    # Check if dev mode auth bypass is enabled
+    if settings.is_development and settings.disable_auth_in_dev:
+        return await AuthService.get_or_create_dev_user(db)
+    
     try:
         return await get_current_user_or_api_key(request, credentials, db)
     except HTTPException:

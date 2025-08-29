@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Steel.run - Atomic Web Functions</title>
-    <meta name="description" content="Transform natural language into web actions. Automate any website task with simple English commands.">
+    <title>Steel.run - Web Actions as a Service</title>
+    <meta name="description" content="Serverless web actions platform. Execute atomic web functions without managing browsers. Pay only for successful actions - $0.001 per execution.">
     
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <link rel="icon" type="image/png" href="/static/favicon.png">
     
     <!-- CSS -->
     <link rel="stylesheet" href="/static/style.css">
@@ -48,13 +47,13 @@
         <section class="hero">
             <div class="hero-content">
                 <h1 class="hero-title">
-                    Transform Natural Language
+                    Web Actions as a Service
                     <br>
-                    <span class="hero-accent">Into Web Actions</span>
+                    <span class="hero-accent">The Lambda Functions for Web</span>
                 </h1>
                 <p class="hero-description">
-                    Just describe what you want to do on any website. Our AI will automate it for you.
-                    Post tweets, fill forms, scrape data, and more with simple English commands.
+                    Execute atomic web functions without managing browsers. No sessions, no lifecycle management, no complexity.
+                    Pay $0.001 per successful action. Failed actions are free. Turn every web interaction into a serverless function call.
                 </p>
                 
                 <!-- Action Input Form -->
@@ -64,7 +63,7 @@
                             <textarea 
                                 id="action-input" 
                                 class="action-input" 
-                                placeholder="e.g., &quot;Post a tweet saying 'Hello World!'&quot; or &quot;Take a screenshot of google.com&quot;"
+                                placeholder="e.g., steel.run(&quot;twitter.com&quot;, post_tweet) or steel.run(&quot;google.com&quot;, take_screenshot)"
                                 rows="3"
                                 maxlength="500"
                                 required
@@ -86,19 +85,19 @@
 
                 <!-- Example Actions -->
                 <div class="example-actions">
-                    <p class="example-label">Try these examples:</p>
+                    <p class="example-label">Web Functions ($0.001 each):</p>
                     <div class="example-buttons">
-                        <button class="example-btn" data-action="Take a screenshot of google.com">
-                            📸 Screenshot Website
+                        <button class="example-btn" data-action="steel.run('google.com', lambda page: page.screenshot())">
+                            📸 Screenshot Function
                         </button>
-                        <button class="example-btn" data-action="Post a tweet saying 'Testing Steel.run - automated web actions!'">
-                            🐦 Post Tweet
+                        <button class="example-btn" data-action="steel.run('twitter.com', lambda page: page.post_tweet('Hello from Steel!'))">
+                            🐦 Tweet Function
                         </button>
-                        <button class="example-btn" data-action="Search for 'web automation' on Google and get the first 5 results">
-                            🔍 Google Search
+                        <button class="example-btn" data-action="steel.run('google.com', lambda page: page.search('web automation').get_results(5))">
+                            🔍 Search Function
                         </button>
-                        <button class="example-btn" data-action="Fill out a contact form on example.com">
-                            📝 Fill Form
+                        <button class="example-btn" data-action="steel.run('linkedin.com', lambda page: page.get_profile_data())">
+                            📊 Data Function
                         </button>
                     </div>
                 </div>
@@ -211,12 +210,12 @@
                     
                     <div class="form-group">
                         <label for="credential-username">Username/Email:</label>
-                        <input type="text" id="credential-username" class="form-control" required>
+                        <input type="text" id="credential-username" class="form-control" autocomplete="username" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="credential-password">Password:</label>
-                        <input type="password" id="credential-password" class="form-control" required>
+                        <input type="password" id="credential-password" class="form-control" autocomplete="current-password" required>
                     </div>
 
                     <div class="form-group">

@@ -45,7 +45,7 @@ async def save_stored_action(
 
     # Convert to response model with computed fields
     response_data = StoredActionResponse.from_orm(stored_action).dict()
-    response_data["api_endpoint"] = f"/api/actions/{stored_action.id}/run"
+    response_data["api_endpoint"] = f"/api/v1/stored-actions/{stored_action.id}/run"
 
     return StoredActionResponse(**response_data)
 
@@ -135,7 +135,7 @@ async def get_stored_action(
         )
 
     response_data = StoredActionResponse.from_orm(stored_action).dict()
-    response_data["api_endpoint"] = f"/api/actions/{stored_action.id}/run"
+    response_data["api_endpoint"] = f"/api/v1/stored-actions/{stored_action.id}/run"
 
     return StoredActionResponse(**response_data)
 
@@ -173,7 +173,7 @@ async def update_stored_action(
         )
 
     response_data = StoredActionResponse.from_orm(stored_action).dict()
-    response_data["api_endpoint"] = f"/api/actions/{stored_action.id}/run"
+    response_data["api_endpoint"] = f"/api/v1/stored-actions/{stored_action.id}/run"
 
     return StoredActionResponse(**response_data)
 

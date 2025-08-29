@@ -338,3 +338,53 @@ class AuthService:
         await db.commit()
 
         return True
+
+    @staticmethod
+    async def get_or_create_dev_user(db: AsyncSession) -> User:
+        """
+        Get or create a default development user for auth bypass.
+        
+        Args:
+            db: Database session
+            
+        Returns:
+            Development user instance
+        """
+        dev_email = "dev@steel.run"
+        
+        # Try to find existing dev user
+        result = await db.execute(select(User).where(User.email == dev_email))
+        dev_user = result.scalar_one_or_none()
+        
+        if not dev_user:
+            # Create dev user with default values
+            from ..schemas.auth import UserCreate
+            
+            dev_user_data = UserCreate(
+                email=dev_email,
+                username="developer",
+                full_name="Development User",
+                password="Dev12345",  # Default dev password
+                default_region="lax",
+                enable_screenshots=True,
+                enable_webhooks=True,
+            )
+            
+            hashed_password = get_password_hash(dev_user_data.password)
+            dev_user = User(
+                email=dev_user_data.email,
+                username=dev_user_data.username,
+                full_name=dev_user_data.full_name,
+                hashed_password=hashed_password,
+                default_region=dev_user_data.default_region,
+                enable_screenshots=dev_user_data.enable_screenshots,
+                enable_webhooks=dev_user_data.enable_webhooks,
+                is_active=True,
+                is_verified=True,  # Dev user is always verified
+            )
+            
+            db.add(dev_user)
+            await db.commit()
+            await db.refresh(dev_user)
+            
+        return dev_user
