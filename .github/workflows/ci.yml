@@ -1,10 +1,11 @@
 name: CI/CD Pipeline
 
-on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
+# TEMPORARILY DISABLED - GitHub Actions paused
+# on:
+#   push:
+#     branches: [ main, develop ]
+#   pull_request:
+#     branches: [ main ]
 
 env:
   PYTHON_VERSION: '3.12'
